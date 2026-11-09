@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "713155887025",
+    "project_id": "mealtrader-d9f2a",
+    "storage_bucket": "mealtrader-d9f2a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:713155887025:android:dd0e6776aa924e55af8790",
+        "android_client_info": {
+          "package_name": "edu.virginia.cs4720.mealtrader"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdmBx0xYuCazmOZpQ0awe7Gjs4UJY-Z5A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
