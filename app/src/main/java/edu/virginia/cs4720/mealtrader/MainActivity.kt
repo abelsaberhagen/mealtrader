@@ -15,6 +15,9 @@ import edu.virginia.cs4720.mealtrader.ui.theme.MealtraderTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        addTestUser()
+
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
