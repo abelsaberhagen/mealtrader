@@ -2,6 +2,11 @@ package edu.virginia.cs4720.mealtrader
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -34,11 +39,21 @@ class LoginViewModel : ViewModel() {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
                 action(state)
+                _uiState.update { it.copy(password = "") }
             } catch (e: Exception) {
-                _uiState.update { it.copy(error = e.message ?: "Something went wrong") }
+                _uiState.update { it.copy(error = friendlyMessage(e)) }
             } finally {
                 _uiState.update { it.copy(isLoading = false) }
             }
         }
+    }
+
+    private fun friendlyMessage(e: Exception): String = when (e) {
+        is FirebaseAuthWeakPasswordException -> "Password must be at least 6 characters"
+        is FirebaseAuthUserCollisionException -> "An account with this email already exists"
+        is FirebaseAuthInvalidUserException -> "No account found with this email"
+        is FirebaseAuthInvalidCredentialsException -> "Wrong email or password"
+        is FirebaseNetworkException -> "No internet connection"
+        else -> "Something went wrong. Try again."
     }
 }
