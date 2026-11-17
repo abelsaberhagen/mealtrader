@@ -3,8 +3,16 @@ package edu.virginia.cs4720.mealtrader
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.tasks.await
+
+data class AppUser(
+    val uid: String = "",
+    val email: String = "",
+    val computingId: String = "",
+    val availableToDonate: Boolean = false
+)
 
 object UserRepository {
     private val db = Firebase.firestore
@@ -23,4 +31,19 @@ object UserRepository {
         )
         ref.set(data).await()
     }
+
+    fun listenToOtherUsers(
+        myUid: String,
+        onChange: (List<AppUser>) -> Unit,
+        onError: (Exception) -> Unit
+    ): ListenerRegistration =
+        users.orderBy("computingId").addSnapshotListener { snap, err ->
+            if (err != null) {
+                onError(err)
+                return@addSnapshotListener
+            }
+            if (snap != null) {
+                onChange(snap.toObjects(AppUser::class.java).filter { it.uid != myUid })
+            }
+        }
 }
