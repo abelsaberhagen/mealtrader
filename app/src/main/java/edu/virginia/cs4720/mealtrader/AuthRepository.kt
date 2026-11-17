@@ -19,11 +19,13 @@ object AuthRepository {
     }
 
     suspend fun signIn(email: String, password: String) {
-        auth.signInWithEmailAndPassword(email, password).await()
+        val result = auth.signInWithEmailAndPassword(email, password).await()
+        result.user?.let { UserRepository.ensureUserDoc(it) }
     }
 
     suspend fun signUp(email: String, password: String) {
-        auth.createUserWithEmailAndPassword(email, password).await()
+        val result = auth.createUserWithEmailAndPassword(email, password).await()
+        result.user?.let { UserRepository.ensureUserDoc(it) }
     }
 
     fun signOut() = auth.signOut()
