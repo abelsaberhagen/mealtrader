@@ -21,8 +21,9 @@ class MainActivity : ComponentActivity() {
             MealtraderTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     val user by AuthRepository.currentUser.collectAsStateWithLifecycle()
+                    val current = user
                     Box(Modifier.padding(innerPadding)) {
-                        if (user == null) LoginScreen() else AppNavigation()
+                        if (current == null) LoginScreen() else ProfileGate(current.uid)
                     }
                 }
             }

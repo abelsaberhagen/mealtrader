@@ -50,7 +50,12 @@ fun UsersScreen(
 private fun UserRow(user: AppUser, preview: ChatPreview?, myUid: String, onClick: () -> Unit) {
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
-            Text(user.computingId, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(user.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                listOf(user.year, user.computingId).filter { it.isNotBlank() }.joinToString(" · "),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             if (user.availableToDonate) {
                 Text("Available to donate", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
             }

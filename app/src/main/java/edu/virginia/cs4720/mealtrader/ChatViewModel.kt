@@ -33,7 +33,7 @@ class ChatViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
     init {
         viewModelScope.launch {
             val other = runCatching { UserRepository.getUser(otherUid) }.getOrNull()
-            _uiState.update { it.copy(otherName = other?.computingId ?: "Chat") }
+            _uiState.update { it.copy(otherName = other?.displayName ?: "Chat") }
         }
     }
 

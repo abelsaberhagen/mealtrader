@@ -45,7 +45,10 @@ class UsersViewModel : ViewModel() {
         )
 
     private fun publish() {
-        val sorted = rawUsers.sortedByDescending { previews[it.uid]?.updatedAt ?: 0L }
+        val sorted = rawUsers.sortedWith(
+            compareByDescending<AppUser> { previews[it.uid]?.updatedAt ?: 0L }
+                .thenBy { it.displayName.lowercase() }
+        )
         _uiState.update {
             it.copy(users = sorted, previews = previews, isLoading = false, error = null)
         }
