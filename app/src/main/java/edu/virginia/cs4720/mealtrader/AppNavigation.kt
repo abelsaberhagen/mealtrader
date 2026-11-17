@@ -23,8 +23,23 @@ fun AppNavigation() {
             )
         }
         composable("users") {
-            UsersScreen(onUserClick = { })
+            UsersScreen(
+                onUserClick = { nav.navigate("chat/${it.uid}") },
+                onBack = { nav.popBackStack() }
+            )
         }
+        composable("chat/{uid}") {
+            ChatScreen(onBack = { nav.popBackStack() })
+        }
+    }
+}
+
+@Composable
+fun ScreenHeader(title: String, onBack: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        TextButton(onClick = onBack) { Text("< Back") }
+        Spacer(Modifier.width(8.dp))
+        Text(title, style = MaterialTheme.typography.headlineSmall)
     }
 }
 

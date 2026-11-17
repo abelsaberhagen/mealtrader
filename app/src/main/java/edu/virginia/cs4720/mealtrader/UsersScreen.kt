@@ -16,12 +16,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun UsersScreen(
     onUserClick: (AppUser) -> Unit,
+    onBack: () -> Unit,
     vm: UsersViewModel = viewModel()
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Browse Users", style = MaterialTheme.typography.headlineMedium)
+        ScreenHeader("Browse Users", onBack)
         Spacer(Modifier.height(16.dp))
 
         when {

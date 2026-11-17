@@ -32,6 +32,9 @@ object UserRepository {
         ref.set(data).await()
     }
 
+    suspend fun getUser(uid: String): AppUser? =
+        users.document(uid).get().await().toObject(AppUser::class.java)
+
     fun listenToOtherUsers(
         myUid: String,
         onChange: (List<AppUser>) -> Unit,
