@@ -8,28 +8,51 @@ import kotlinx.coroutines.flow.update
 
 data class UsersUiState(
     val users: List<AppUser> = emptyList(),
+    val previews: Map<String, ChatPreview> = emptyMap(),
     val isLoading: Boolean = true,
     val error: String? = null
 )
 
 class UsersViewModel : ViewModel() {
+    val myUid: String = AuthRepository.currentUser.value?.uid ?: ""
+
     private val _uiState = MutableStateFlow(UsersUiState())
     val uiState = _uiState.asStateFlow()
 
-    private val registration: ListenerRegistration? =
-        AuthRepository.currentUser.value?.uid?.let { uid ->
-            UserRepository.listenToOtherUsers(
-                myUid = uid,
-                onChange = { list ->
-                    _uiState.update { it.copy(users = list, isLoading = false, error = null) }
-                },
-                onError = {
-                    _uiState.update { it.copy(isLoading = false, error = "Couldn't load users") }
-                }
-            )
+    private var rawUsers: List<AppUser> = emptyList()
+    private var previews: Map<String, ChatPreview> = emptyMap()
+
+    private val usersRegistration: ListenerRegistration =
+        UserRepository.listenToOtherUsers(
+            myUid = myUid,
+            onChange = { list ->
+                rawUsers = list
+                publish()
+            },
+            onError = {
+                _uiState.update { it.copy(isLoading = false, error = "Couldn't load users") }
+            }
+        )
+
+    private val chatsRegistration: ListenerRegistration =
+        ChatRepository.listenToMyChats(
+            myUid = myUid,
+            onChange = { map ->
+                previews = map
+                publish()
+            },
+            onError = { }
+        )
+
+    private fun publish() {
+        val sorted = rawUsers.sortedByDescending { previews[it.uid]?.updatedAt ?: 0L }
+        _uiState.update {
+            it.copy(users = sorted, previews = previews, isLoading = false, error = null)
         }
+    }
 
     override fun onCleared() {
-        registration?.remove()
+        usersRegistration.remove()
+        chatsRegistration.remove()
     }
 }

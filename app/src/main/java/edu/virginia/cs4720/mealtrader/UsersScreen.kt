@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -33,7 +34,12 @@ fun UsersScreen(
             state.users.isEmpty() -> Text("No other users yet")
             else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(state.users, key = { it.uid }) { user ->
-                    UserRow(user = user, onClick = { onUserClick(user) })
+                    UserRow(
+                        user = user,
+                        preview = state.previews[user.uid],
+                        myUid = vm.myUid,
+                        onClick = { onUserClick(user) }
+                    )
                 }
             }
         }
@@ -41,14 +47,28 @@ fun UsersScreen(
 }
 
 @Composable
-private fun UserRow(user: AppUser, onClick: () -> Unit) {
+private fun UserRow(user: AppUser, preview: ChatPreview?, myUid: String, onClick: () -> Unit) {
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Text(user.computingId, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(user.email, style = MaterialTheme.typography.bodySmall)
             if (user.availableToDonate) {
-                Spacer(Modifier.height(4.dp))
-                Text("Available to donate", color = MaterialTheme.colorScheme.primary)
+                Text("Available to donate", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+            }
+            Spacer(Modifier.height(4.dp))
+            if (preview != null && preview.lastMessage.isNotEmpty()) {
+                val prefix = if (preview.lastSenderId == myUid) "You: " else ""
+                Text(
+                    prefix + preview.lastMessage,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            } else {
+                Text(
+                    "Tap to start a chat",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
