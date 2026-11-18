@@ -1,7 +1,9 @@
 package edu.virginia.cs4720.mealtrader
 
 import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
@@ -22,6 +24,7 @@ val AppUser.displayName: String
     get() = "$firstName $lastName".trim().ifBlank { computingId }
 
 object UserRepository {
+    private val auth: FirebaseAuth = Firebase.auth
     private val db = Firebase.firestore
     private val users = db.collection("users")
 
@@ -56,6 +59,19 @@ object UserRepository {
 
     suspend fun getUser(uid: String): AppUser? =
         users.document(uid).get().await().toObject(AppUser::class.java)
+
+    suspend fun addFriend(friend_uid: String) {
+
+            val uid = auth.currentUser?.uid
+                ?: throw IllegalStateException("No authenticated user found")
+
+            db.collection("users")
+                .document(uid)
+                .collection("items")
+                .add(friend_uid)
+                .await()
+    }
+
 
     fun listenToUser(
         uid: String,
