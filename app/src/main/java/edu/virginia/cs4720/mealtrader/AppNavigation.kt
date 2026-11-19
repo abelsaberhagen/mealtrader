@@ -19,12 +19,19 @@ fun AppNavigation() {
         composable("home") {
             HomePlaceholder(
                 onBrowseUsers = { nav.navigate("users") },
+                onFriends = { nav.navigate("friends") },
                 onSignOut = { AuthRepository.signOut() }
             )
         }
         composable("users") {
             UsersScreen(
                 onUserClick = { nav.navigate("chat/${it.uid}") },
+                onBack = { nav.popBackStack() }
+            )
+        }
+        composable("friends") {
+            FriendsScreen(
+                onFriendClick = { nav.navigate("chat/${it.uid}") },
                 onBack = { nav.popBackStack() }
             )
         }
@@ -44,7 +51,7 @@ fun ScreenHeader(title: String, onBack: () -> Unit) {
 }
 
 @Composable
-fun HomePlaceholder(onBrowseUsers: () -> Unit, onSignOut: () -> Unit) {
+fun HomePlaceholder(onBrowseUsers: () -> Unit, onFriends: () -> Unit, onSignOut: () -> Unit) {
     val user by AuthRepository.currentUser.collectAsStateWithLifecycle()
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -54,6 +61,8 @@ fun HomePlaceholder(onBrowseUsers: () -> Unit, onSignOut: () -> Unit) {
         Text("Logged in as ${user?.email ?: ""}")
         Spacer(Modifier.height(16.dp))
         Button(onClick = onBrowseUsers, modifier = Modifier.fillMaxWidth()) { Text("Browse Users") }
+        Spacer(Modifier.height(8.dp))
+        Button(onClick = onFriends, modifier = Modifier.fillMaxWidth()) { Text("Friends") }
         Spacer(Modifier.height(8.dp))
         OutlinedButton(onClick = onSignOut, modifier = Modifier.fillMaxWidth()) { Text("Sign Out") }
     }

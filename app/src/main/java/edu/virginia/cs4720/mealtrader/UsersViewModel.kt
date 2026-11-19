@@ -1,14 +1,17 @@
 package edu.virginia.cs4720.mealtrader
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 data class UsersUiState(
     val users: List<AppUser> = emptyList(),
     val previews: Map<String, ChatPreview> = emptyMap(),
+    val friendIds: Set<String> = emptySet(),
     val isLoading: Boolean = true,
     val error: String? = null
 )
@@ -44,6 +47,23 @@ class UsersViewModel : ViewModel() {
             onError = { }
         )
 
+    private val friendsRegistration: ListenerRegistration =
+        UserRepository.listenToFriendIds(
+            myUid = myUid,
+            onChange = { ids -> _uiState.update { it.copy(friendIds = ids) } },
+            onError = { }
+        )
+
+    fun addFriend(uid: String) {
+        viewModelScope.launch {
+            try {
+                UserRepository.addFriend(uid)
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "Couldn't add friend") }
+            }
+        }
+    }
+
     private fun publish() {
         val sorted = rawUsers.sortedWith(
             compareByDescending<AppUser> { previews[it.uid]?.updatedAt ?: 0L }
@@ -57,5 +77,6 @@ class UsersViewModel : ViewModel() {
     override fun onCleared() {
         usersRegistration.remove()
         chatsRegistration.remove()
+        friendsRegistration.remove()
     }
 }

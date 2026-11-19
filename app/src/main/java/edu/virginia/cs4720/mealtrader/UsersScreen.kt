@@ -38,7 +38,9 @@ fun UsersScreen(
                         user = user,
                         preview = state.previews[user.uid],
                         myUid = vm.myUid,
-                        onClick = { onUserClick(user) }
+                        isFriend = user.uid in state.friendIds,
+                        onClick = { onUserClick(user) },
+                        onAddFriend = { vm.addFriend(user.uid) }
                     )
                 }
             }
@@ -47,33 +49,48 @@ fun UsersScreen(
 }
 
 @Composable
-private fun UserRow(user: AppUser, preview: ChatPreview?, myUid: String, onClick: () -> Unit) {
+private fun UserRow(
+    user: AppUser,
+    preview: ChatPreview?,
+    myUid: String,
+    isFriend: Boolean,
+    onClick: () -> Unit,
+    onAddFriend: () -> Unit
+) {
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp)) {
-            Text(user.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(
-                listOf(user.year, user.computingId).filter { it.isNotBlank() }.joinToString(" · "),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            if (user.availableToDonate) {
-                Text("Available to donate", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
-            }
-            Spacer(Modifier.height(4.dp))
-            if (preview != null && preview.lastMessage.isNotEmpty()) {
-                val prefix = if (preview.lastSenderId == myUid) "You: " else ""
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(user.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(
-                    prefix + preview.lastMessage,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            } else {
-                Text(
-                    "Tap to start a chat",
-                    style = MaterialTheme.typography.bodyMedium,
+                    listOf(user.year, user.computingId).filter { it.isNotBlank() }.joinToString(" · "),
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                if (user.availableToDonate) {
+                    Text("Available to donate", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+                }
+                Spacer(Modifier.height(4.dp))
+                if (preview != null && preview.lastMessage.isNotEmpty()) {
+                    val prefix = if (preview.lastSenderId == myUid) "You: " else ""
+                    Text(
+                        prefix + preview.lastMessage,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                } else {
+                    Text(
+                        "Tap to start a chat",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Spacer(Modifier.width(8.dp))
+            if (isFriend) {
+                Text("Friend ✓", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
+            } else {
+                OutlinedButton(onClick = onAddFriend) { Text("Add Friend") }
             }
         }
     }
