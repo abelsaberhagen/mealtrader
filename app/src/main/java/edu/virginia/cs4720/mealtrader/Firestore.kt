@@ -60,17 +60,36 @@ object UserRepository {
     suspend fun getUser(uid: String): AppUser? =
         users.document(uid).get().await().toObject(AppUser::class.java)
 
-    suspend fun addFriend(friend_uid: String) {
+    private fun friendsOf(uid: String) =
+        db.collection("friends").document(uid).collection("items")
 
-            val uid = auth.currentUser?.uid
-                ?: throw IllegalStateException("No authenticated user found")
 
-            db.collection("users")
-                .document(uid)
-                .collection("items")
-                .add(friend_uid)
-                .await()
+    suspend fun addFriend(friendUid: String) {
+        val uid = auth.currentUser?.uid
+            ?: throw IllegalStateException("No authenticated user found")
+
+        friendsOf(uid).document(friendUid).set(
+            mapOf(
+                "uid" to friendUid,
+                "addedAt" to FieldValue.serverTimestamp()
+            )
+        ).await()
     }
+
+    fun listenToFriendIds(
+        myUid: String,
+        onChange: (Set<String>) -> Unit,
+        onError: (Exception) -> Unit
+    ): ListenerRegistration =
+        friendsOf(myUid).addSnapshotListener { snap, err ->
+            if (err != null) {
+                onError(err)
+                return@addSnapshotListener
+            }
+            if (snap != null) {
+                onChange(snap.documents.map { it.id }.toSet())
+            }
+        }
 
 
     fun listenToUser(
