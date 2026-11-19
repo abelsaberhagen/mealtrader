@@ -1,13 +1,16 @@
 package edu.virginia.cs4720.mealtrader
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 data class FriendsUiState(
     val friends: List<AppUser> = emptyList(),
+    val nonFriends: List<AppUser> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null
 )
@@ -44,10 +47,22 @@ class FriendsViewModel : ViewModel() {
     private fun publish() {
         val ids = friendIds ?: return   // wait until both listeners have fired once
         val users = allUsers ?: return
-        val friends = users
-            .filter { it.uid in ids }
+        val (friends, nonFriends) = users
             .sortedBy { it.displayName.lowercase() }
-        _uiState.update { it.copy(friends = friends, isLoading = false, error = null) }
+            .partition { it.uid in ids }
+        _uiState.update {
+            it.copy(friends = friends, nonFriends = nonFriends, isLoading = false, error = null)
+        }
+    }
+
+    fun addFriend(uid: String) {
+        viewModelScope.launch {
+            try {
+                UserRepository.addFriend(uid)
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "Couldn't add friend") }
+            }
+        }
     }
 
     private fun setError() {
