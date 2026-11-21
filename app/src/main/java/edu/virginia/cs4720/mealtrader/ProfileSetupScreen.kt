@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
@@ -18,6 +19,10 @@ import kotlinx.coroutines.launch
 
 val YEAR_OPTIONS = listOf("1st Year", "2nd Year", "3rd Year", "4th Year", "Grad")
 
+private const val SETUP_FIRST_KEY = "setup_first"
+private const val SETUP_LAST_KEY = "setup_last"
+private const val SETUP_YEAR_KEY = "setup_year"
+
 data class ProfileSetupUiState(
     val firstName: String = "",
     val lastName: String = "",
@@ -26,13 +31,30 @@ data class ProfileSetupUiState(
     val error: String? = null
 )
 
-class ProfileSetupViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(ProfileSetupUiState())
+class ProfileSetupViewModel(private val savedStateHandle: SavedStateHandle) : ViewModel() {
+    private val _uiState = MutableStateFlow(
+        ProfileSetupUiState(
+            firstName = savedStateHandle[SETUP_FIRST_KEY] ?: "",
+            lastName = savedStateHandle[SETUP_LAST_KEY] ?: "",
+            year = savedStateHandle[SETUP_YEAR_KEY] ?: ""
+        )
+    )
     val uiState = _uiState.asStateFlow()
 
-    fun onFirstNameChange(v: String) = _uiState.update { it.copy(firstName = v, error = null) }
-    fun onLastNameChange(v: String) = _uiState.update { it.copy(lastName = v, error = null) }
-    fun onYearChange(v: String) = _uiState.update { it.copy(year = v, error = null) }
+    fun onFirstNameChange(v: String) {
+        savedStateHandle[SETUP_FIRST_KEY] = v
+        _uiState.update { it.copy(firstName = v, error = null) }
+    }
+
+    fun onLastNameChange(v: String) {
+        savedStateHandle[SETUP_LAST_KEY] = v
+        _uiState.update { it.copy(lastName = v, error = null) }
+    }
+
+    fun onYearChange(v: String) {
+        savedStateHandle[SETUP_YEAR_KEY] = v
+        _uiState.update { it.copy(year = v, error = null) }
+    }
 
     fun save() {
         val s = _uiState.value

@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
@@ -18,6 +19,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+private const val EDIT_FIRST_KEY = "edit_first"
+private const val EDIT_LAST_KEY = "edit_last"
+private const val EDIT_YEAR_KEY = "edit_year"
+private const val EDIT_AVAILABLE_KEY = "edit_available"
 
 data class EditProfileUiState(
     val firstName: String = "",
@@ -31,7 +37,7 @@ data class EditProfileUiState(
     val error: String? = null
 )
 
-class EditProfileViewModel : ViewModel() {
+class EditProfileViewModel(private val savedStateHandle: SavedStateHandle) : ViewModel() {
     private val myUid = AuthRepository.currentUser.value?.uid ?: ""
 
     private val _uiState = MutableStateFlow(EditProfileUiState())
@@ -42,10 +48,10 @@ class EditProfileViewModel : ViewModel() {
             val user = runCatching { UserRepository.getUser(myUid) }.getOrNull()
             _uiState.update {
                 it.copy(
-                    firstName = user?.firstName ?: "",
-                    lastName = user?.lastName ?: "",
-                    year = user?.year ?: "",
-                    availableToDonate = user?.availableToDonate ?: false,
+                    firstName = savedStateHandle[EDIT_FIRST_KEY] ?: user?.firstName ?: "",
+                    lastName = savedStateHandle[EDIT_LAST_KEY] ?: user?.lastName ?: "",
+                    year = savedStateHandle[EDIT_YEAR_KEY] ?: user?.year ?: "",
+                    availableToDonate = savedStateHandle[EDIT_AVAILABLE_KEY] ?: user?.availableToDonate ?: false,
                     savedUser = user,
                     isLoading = false,
                     error = if (user == null) "Couldn't load your profile" else null
@@ -54,10 +60,25 @@ class EditProfileViewModel : ViewModel() {
         }
     }
 
-    fun onFirstNameChange(v: String) = _uiState.update { it.copy(firstName = v, error = null, saved = false) }
-    fun onLastNameChange(v: String) = _uiState.update { it.copy(lastName = v, error = null, saved = false) }
-    fun onYearChange(v: String) = _uiState.update { it.copy(year = v, error = null, saved = false) }
-    fun onAvailableChange(v: Boolean) = _uiState.update { it.copy(availableToDonate = v, saved = false) }
+    fun onFirstNameChange(v: String) {
+        savedStateHandle[EDIT_FIRST_KEY] = v
+        _uiState.update { it.copy(firstName = v, error = null, saved = false) }
+    }
+
+    fun onLastNameChange(v: String) {
+        savedStateHandle[EDIT_LAST_KEY] = v
+        _uiState.update { it.copy(lastName = v, error = null, saved = false) }
+    }
+
+    fun onYearChange(v: String) {
+        savedStateHandle[EDIT_YEAR_KEY] = v
+        _uiState.update { it.copy(year = v, error = null, saved = false) }
+    }
+
+    fun onAvailableChange(v: Boolean) {
+        savedStateHandle[EDIT_AVAILABLE_KEY] = v
+        _uiState.update { it.copy(availableToDonate = v, saved = false) }
+    }
 
     fun save() {
         val s = _uiState.value
@@ -77,6 +98,10 @@ class EditProfileViewModel : ViewModel() {
                     year = s.year,
                     availableToDonate = s.availableToDonate
                 )
+                savedStateHandle.remove<String>(EDIT_FIRST_KEY)
+                savedStateHandle.remove<String>(EDIT_LAST_KEY)
+                savedStateHandle.remove<String>(EDIT_YEAR_KEY)
+                savedStateHandle.remove<Boolean>(EDIT_AVAILABLE_KEY)
                 _uiState.update {
                     it.copy(
                         saved = true,
