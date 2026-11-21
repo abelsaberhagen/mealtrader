@@ -15,7 +15,7 @@ Users can browse other students, request a swipe, and the donor accepts or decli
 - Share availability into other apps
 - Bottom navigation bar, theme fixes
 
-**Abel Saperhagen**
+**Abel Saberhagen**
 - Project and Firebase setup
 - Friends collection in Firestore and Friends screen
 - Friends search
