@@ -1,11 +1,14 @@
 package edu.virginia.cs4720.mealtrader
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -21,6 +24,7 @@ data class EditProfileUiState(
     val lastName: String = "",
     val year: String = "",
     val availableToDonate: Boolean = false,
+    val savedUser: AppUser? = null,
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
     val saved: Boolean = false,
@@ -42,6 +46,7 @@ class EditProfileViewModel : ViewModel() {
                     lastName = user?.lastName ?: "",
                     year = user?.year ?: "",
                     availableToDonate = user?.availableToDonate ?: false,
+                    savedUser = user,
                     isLoading = false,
                     error = if (user == null) "Couldn't load your profile" else null
                 )
@@ -63,14 +68,26 @@ class EditProfileViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, error = null) }
             try {
+                val first = s.firstName.trim()
+                val last = s.lastName.trim()
                 UserRepository.updateProfile(
                     uid = myUid,
-                    firstName = s.firstName.trim(),
-                    lastName = s.lastName.trim(),
+                    firstName = first,
+                    lastName = last,
                     year = s.year,
                     availableToDonate = s.availableToDonate
                 )
-                _uiState.update { it.copy(saved = true) }
+                _uiState.update {
+                    it.copy(
+                        saved = true,
+                        savedUser = it.savedUser?.copy(
+                            firstName = first,
+                            lastName = last,
+                            year = s.year,
+                            availableToDonate = s.availableToDonate
+                        )
+                    )
+                }
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = "Couldn't save. Try again.") }
             } finally {
@@ -80,12 +97,25 @@ class EditProfileViewModel : ViewModel() {
     }
 }
 
+private fun shareAvailability(context: Context, user: AppUser) {
+    val details = listOf(user.computingId, user.year).filter { it.isNotBlank() }.joinToString(", ")
+    val text = "I have meal swipes to give on Meal Trader! Message me there: ${user.displayName} ($details)"
+    val send = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_SUBJECT, "Meal swipes available")
+        putExtra(Intent.EXTRA_TEXT, text)
+    }
+    context.startActivity(Intent.createChooser(send, "Share availability"))
+}
+
 @Composable
 fun EditProfileScreen(
     onBack: (() -> Unit)? = null,
     vm: EditProfileViewModel = viewModel()
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val canShare = state.savedUser?.availableToDonate == true
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         ScreenHeader("Profile", onBack)
@@ -149,6 +179,24 @@ fun EditProfileScreen(
         }
 
         Spacer(Modifier.weight(1f))
+
+        OutlinedButton(
+            onClick = { state.savedUser?.let { shareAvailability(context, it) } },
+            enabled = canShare,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+        ) {
+            Text("Share my availability")
+        }
+        if (!canShare) {
+            Text(
+                "Turn on Available to donate and save to share",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+
         Button(
             onClick = { vm.save() },
             enabled = !state.isSaving && !state.saved,
