@@ -45,7 +45,7 @@ class FriendsViewModel : ViewModel() {
         )
 
     private fun publish() {
-        val ids = friendIds ?: return   // wait until both listeners have fired once
+        val ids = friendIds ?: return
         val users = allUsers ?: return
         val (friends, nonFriends) = users
             .sortedBy { it.displayName.lowercase() }
