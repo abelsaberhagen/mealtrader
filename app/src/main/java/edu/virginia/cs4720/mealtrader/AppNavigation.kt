@@ -21,6 +21,7 @@ fun AppNavigation() {
                 onBrowseUsers = { nav.navigate("users") },
                 onFriends = { nav.navigate("friends") },
                 onEditProfile = { nav.navigate("editProfile") },
+                onSettings = { nav.navigate("settings") },
                 onSignOut = { AuthRepository.signOut() }
             )
         }
@@ -42,6 +43,9 @@ fun AppNavigation() {
         composable("editProfile") {
             EditProfileScreen(onBack = { nav.popBackStack() })
         }
+        composable("settings") {
+            SettingsScreen(onBack = { nav.popBackStack() })
+        }
     }
 }
 
@@ -59,6 +63,7 @@ fun HomePlaceholder(
     onBrowseUsers: () -> Unit,
     onFriends: () -> Unit,
     onEditProfile: () -> Unit,
+    onSettings: () -> Unit,
     onSignOut: () -> Unit
 ) {
     val user by AuthRepository.currentUser.collectAsStateWithLifecycle()
@@ -74,6 +79,8 @@ fun HomePlaceholder(
         Button(onClick = onFriends, modifier = Modifier.fillMaxWidth()) { Text("Friends") }
         Spacer(Modifier.height(8.dp))
         Button(onClick = onEditProfile, modifier = Modifier.fillMaxWidth()) { Text("Edit Profile") }
+        Spacer(Modifier.height(8.dp))
+        Button(onClick = onSettings, modifier = Modifier.fillMaxWidth()) { Text("Settings") }
         Spacer(Modifier.height(8.dp))
         OutlinedButton(onClick = onSignOut, modifier = Modifier.fillMaxWidth()) { Text("Sign Out") }
     }
