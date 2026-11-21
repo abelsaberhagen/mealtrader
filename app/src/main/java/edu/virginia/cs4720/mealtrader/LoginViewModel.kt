@@ -1,5 +1,6 @@
 package edu.virginia.cs4720.mealtrader
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.FirebaseNetworkException
@@ -12,6 +13,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+private const val EMAIL_KEY = "email"
+
 data class LoginUiState(
     val email: String = "",
     val password: String = "",
@@ -19,11 +22,17 @@ data class LoginUiState(
     val error: String? = null
 )
 
-class LoginViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(LoginUiState())
+class LoginViewModel(private val savedStateHandle: SavedStateHandle) : ViewModel() {
+    private val _uiState = MutableStateFlow(
+        LoginUiState(email = savedStateHandle[EMAIL_KEY] ?: "")
+    )
     val uiState = _uiState.asStateFlow()
 
-    fun onEmailChange(value: String) = _uiState.update { it.copy(email = value, error = null) }
+    fun onEmailChange(value: String) {
+        savedStateHandle[EMAIL_KEY] = value
+        _uiState.update { it.copy(email = value, error = null) }
+    }
+
     fun onPasswordChange(value: String) = _uiState.update { it.copy(password = value, error = null) }
 
     fun signIn() = submit { AuthRepository.signIn(it.email.trim(), it.password) }

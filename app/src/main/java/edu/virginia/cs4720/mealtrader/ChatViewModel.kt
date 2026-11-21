@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+private const val DRAFT_KEY = "draft"
+
 data class ChatUiState(
     val otherName: String = "",
     val messages: List<Message> = emptyList(),
@@ -17,11 +19,13 @@ data class ChatUiState(
     val error: String? = null
 )
 
-class ChatViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
+class ChatViewModel(private val savedStateHandle: SavedStateHandle) : ViewModel() {
     private val otherUid: String = checkNotNull(savedStateHandle["uid"])
     val myUid: String = AuthRepository.currentUser.value?.uid ?: ""
 
-    private val _uiState = MutableStateFlow(ChatUiState())
+    private val _uiState = MutableStateFlow(
+        ChatUiState(draft = savedStateHandle[DRAFT_KEY] ?: "")
+    )
     val uiState = _uiState.asStateFlow()
 
     private val registration: ListenerRegistration = ChatRepository.listenToMessages(
@@ -37,7 +41,10 @@ class ChatViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
         }
     }
 
-    fun onDraftChange(value: String) = _uiState.update { it.copy(draft = value) }
+    fun onDraftChange(value: String) {
+        savedStateHandle[DRAFT_KEY] = value
+        _uiState.update { it.copy(draft = value) }
+    }
 
     fun send() {
         val text = _uiState.value.draft.trim()
@@ -46,6 +53,7 @@ class ChatViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
             _uiState.update { it.copy(isSending = true, error = null) }
             try {
                 ChatRepository.sendMessage(myUid, otherUid, text)
+                savedStateHandle[DRAFT_KEY] = ""
                 _uiState.update { it.copy(draft = "") }
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = "Message failed to send") }
