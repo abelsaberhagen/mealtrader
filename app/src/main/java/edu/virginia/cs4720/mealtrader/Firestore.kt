@@ -57,6 +57,25 @@ object UserRepository {
         ).await()
     }
 
+    suspend fun updateProfile(
+        uid: String,
+        firstName: String,
+        lastName: String,
+        year: String,
+        availableToDonate: Boolean
+    ) {
+        users.document(uid).set(
+            mapOf(
+                "uid" to uid,
+                "firstName" to firstName,
+                "lastName" to lastName,
+                "year" to year,
+                "availableToDonate" to availableToDonate
+            ),
+            SetOptions.merge()
+        ).await()
+    }
+
     suspend fun getUser(uid: String): AppUser? =
         users.document(uid).get().await().toObject(AppUser::class.java)
 
