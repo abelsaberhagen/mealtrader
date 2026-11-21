@@ -1,6 +1,7 @@
 package edu.virginia.cs4720.mealtrader
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,18 +13,20 @@ data class UsersUiState(
     val users: List<AppUser> = emptyList(),
     val previews: Map<String, ChatPreview> = emptyMap(),
     val friendIds: Set<String> = emptySet(),
+    val availableOnly: Boolean = false,
     val isLoading: Boolean = true,
     val error: String? = null
 )
 
-class UsersViewModel : ViewModel() {
+class UsersViewModel(application: Application) : AndroidViewModel(application) {
     val myUid: String = AuthRepository.currentUser.value?.uid ?: ""
 
     private val _uiState = MutableStateFlow(UsersUiState())
     val uiState = _uiState.asStateFlow()
 
-    private var rawUsers: List<AppUser> = emptyList()
+    private var rawUsers: List<AppUser>? = null
     private var previews: Map<String, ChatPreview> = emptyMap()
+    private var settings: AppSettings = AppSettings()
 
     private val usersRegistration: ListenerRegistration =
         UserRepository.listenToOtherUsers(
@@ -54,6 +57,15 @@ class UsersViewModel : ViewModel() {
             onError = { }
         )
 
+    init {
+        viewModelScope.launch {
+            SettingsRepository(application).settings.collect {
+                settings = it
+                publish()
+            }
+        }
+    }
+
     fun addFriend(uid: String) {
         viewModelScope.launch {
             try {
@@ -65,12 +77,23 @@ class UsersViewModel : ViewModel() {
     }
 
     private fun publish() {
-        val sorted = rawUsers.sortedWith(
-            compareByDescending<AppUser> { previews[it.uid]?.updatedAt ?: 0L }
-                .thenBy { it.displayName.lowercase() }
-        )
+        val users = rawUsers ?: return
+        val filtered = if (settings.availableOnly) users.filter { it.availableToDonate } else users
+        val sorted = when (settings.sortMode) {
+            SortMode.RECENT -> filtered.sortedWith(
+                compareByDescending<AppUser> { previews[it.uid]?.updatedAt ?: 0L }
+                    .thenBy { it.displayName.lowercase() }
+            )
+            SortMode.NAME -> filtered.sortedBy { it.displayName.lowercase() }
+        }
         _uiState.update {
-            it.copy(users = sorted, previews = previews, isLoading = false, error = null)
+            it.copy(
+                users = sorted,
+                previews = previews,
+                availableOnly = settings.availableOnly,
+                isLoading = false,
+                error = null
+            )
         }
     }
 

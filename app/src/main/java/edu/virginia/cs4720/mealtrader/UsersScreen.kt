@@ -31,7 +31,9 @@ fun UsersScreen(
                 CircularProgressIndicator()
             }
             state.error != null -> Text(state.error!!, color = MaterialTheme.colorScheme.error)
-            state.users.isEmpty() -> Text("No other users yet")
+            state.users.isEmpty() -> Text(
+                if (state.availableOnly) "No one is available to donate right now" else "No other users yet"
+            )
             else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(state.users, key = { it.uid }) { user ->
                     UserRow(
