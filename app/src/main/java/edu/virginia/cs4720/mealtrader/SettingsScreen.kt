@@ -27,11 +27,15 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 }
 
 @Composable
-fun SettingsScreen(onBack: () -> Unit, vm: SettingsViewModel = viewModel()) {
+fun SettingsScreen(onBack: (() -> Unit)? = null, vm: SettingsViewModel = viewModel()) {
     val settings by vm.settings.collectAsStateWithLifecycle()
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        ScreenHeader("Settings", onBack)
+        ScreenHeader("Settings", onBack) {
+            TextButton(onClick = { AuthRepository.signOut() }) {
+                Text("Sign out", color = MaterialTheme.colorScheme.error)
+            }
+        }
         Spacer(Modifier.height(24.dp))
 
         Text("Theme", style = MaterialTheme.typography.titleSmall)

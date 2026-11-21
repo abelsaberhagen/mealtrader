@@ -17,7 +17,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun UsersScreen(
     onUserClick: (AppUser) -> Unit,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     vm: UsersViewModel = viewModel()
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()

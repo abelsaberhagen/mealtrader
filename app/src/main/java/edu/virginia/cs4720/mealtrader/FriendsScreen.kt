@@ -22,7 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun FriendsScreen(
     onFriendClick: (AppUser) -> Unit,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     vm: FriendsViewModel = viewModel()
 ) {
 
@@ -100,4 +100,3 @@ fun FriendsScreen(
         }
     }
 }
-

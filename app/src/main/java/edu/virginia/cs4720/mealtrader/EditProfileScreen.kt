@@ -3,7 +3,6 @@ package edu.virginia.cs4720.mealtrader
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,10 +49,10 @@ class EditProfileViewModel : ViewModel() {
         }
     }
 
-    fun onFirstNameChange(v: String) = _uiState.update { it.copy(firstName = v, error = null) }
-    fun onLastNameChange(v: String) = _uiState.update { it.copy(lastName = v, error = null) }
-    fun onYearChange(v: String) = _uiState.update { it.copy(year = v, error = null) }
-    fun onAvailableChange(v: Boolean) = _uiState.update { it.copy(availableToDonate = v) }
+    fun onFirstNameChange(v: String) = _uiState.update { it.copy(firstName = v, error = null, saved = false) }
+    fun onLastNameChange(v: String) = _uiState.update { it.copy(lastName = v, error = null, saved = false) }
+    fun onYearChange(v: String) = _uiState.update { it.copy(year = v, error = null, saved = false) }
+    fun onAvailableChange(v: Boolean) = _uiState.update { it.copy(availableToDonate = v, saved = false) }
 
     fun save() {
         val s = _uiState.value
@@ -83,17 +82,13 @@ class EditProfileViewModel : ViewModel() {
 
 @Composable
 fun EditProfileScreen(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     vm: EditProfileViewModel = viewModel()
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(state.saved) {
-        if (state.saved) onBack()
-    }
-
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        ScreenHeader("Edit Profile", onBack)
+        ScreenHeader("Profile", onBack)
         Spacer(Modifier.height(16.dp))
 
         if (state.isLoading) {
@@ -153,13 +148,19 @@ fun EditProfileScreen(
             Text(it, color = MaterialTheme.colorScheme.error)
         }
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.weight(1f))
         Button(
             onClick = { vm.save() },
-            enabled = !state.isSaving,
-            modifier = Modifier.fillMaxWidth()
+            enabled = !state.isSaving && !state.saved,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
         ) {
-            Text(if (state.isSaving) "Saving..." else "Save")
+            Text(
+                when {
+                    state.isSaving -> "Saving..."
+                    state.saved -> "Saved ✓"
+                    else -> "Save"
+                }
+            )
         }
     }
 }
